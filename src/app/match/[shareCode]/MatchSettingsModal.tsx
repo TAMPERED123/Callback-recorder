@@ -2,16 +2,16 @@
 
 import { useState } from "react";
 import { type Match } from "@/lib/supabase";
+import { getOwnerId } from "@/lib/owner";
 import { X, Trash2, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Props {
   match: Match;
-  shareCode: string;
   onClose: () => void;
 }
 
-export default function MatchSettingsModal({ match, shareCode, onClose }: Props) {
+export default function MatchSettingsModal({ match, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [newName, setNewName] = useState(match.match_name);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -24,17 +24,12 @@ export default function MatchSettingsModal({ match, shareCode, onClose }: Props)
     }
     setLoading(true);
     try {
-      const response = await fetch(`/api/matches/${encodeURIComponent(shareCode)}/write`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "updateMatch", payload: { matchName: newName.trim() } }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Failed to update name");
+      const r = await fetch('/api/matches/write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'updateMatch',matchId:match.id,ownerId:getOwnerId(),values:{match_name:newName.trim()}})});
+      if (!r.ok) throw new Error((await r.json()).error || 'Failed to update name');
       setIsEditingName(false);
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : "Failed to update name");
+      alert("Failed to update name");
     } finally {
       setLoading(false);
     }
@@ -44,17 +39,12 @@ export default function MatchSettingsModal({ match, shareCode, onClose }: Props)
     const newStatus = match.status === 'active' ? 'completed' : 'active';
     setLoading(true);
     try {
-      const response = await fetch(`/api/matches/${encodeURIComponent(shareCode)}/write`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "updateMatch", payload: { status: newStatus } }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Failed to update status");
+      const r = await fetch('/api/matches/write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'updateMatch',matchId:match.id,ownerId:getOwnerId(),values:{status:newStatus}})});
+      if (!r.ok) throw new Error((await r.json()).error || 'Failed to update status');
       onClose();
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : "Failed to update status");
+      alert("Failed to update status");
       setLoading(false);
     }
   };
@@ -64,17 +54,12 @@ export default function MatchSettingsModal({ match, shareCode, onClose }: Props)
     
     setLoading(true);
     try {
-      const response = await fetch(`/api/matches/${encodeURIComponent(shareCode)}/write`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "deleteMatch" }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Failed to delete match");
+      const r = await fetch('/api/matches/write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deleteMatch',matchId:match.id,ownerId:getOwnerId()})});
+      if (!r.ok) throw new Error((await r.json()).error || 'Failed to delete match');
       router.push('/history');
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : "Failed to delete match");
+      alert("Failed to delete match");
       setLoading(false);
     }
   };

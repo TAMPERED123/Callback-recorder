@@ -4,26 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogIn, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { extractShareCode } from "@/lib/ownership";
 
 export default function JoinMatch() {
   const router = useRouter();
   const [shareCode, setShareCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-
-    const extractedCode = extractShareCode(shareCode);
-    if (!extractedCode) {
-      setError("Invalid share code");
-      return;
-    }
-
+    if (!shareCode.trim()) return;
+    
     setLoading(true);
-    router.push(`/match/${encodeURIComponent(extractedCode)}`);
+    // Let the match page handle whether the code exists or not
+    router.push(`/match/${shareCode.trim().toUpperCase()}`);
   };
 
   return (
@@ -39,7 +32,7 @@ export default function JoinMatch() {
         <div className="mx-auto w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-2">
           <LogIn className="w-8 h-8 ml-1" />
         </div>
-
+        
         <p className="text-slate-600 text-sm mb-6">
           Enter the share code provided by the match creator to view the live scoreboard.
         </p>
@@ -49,18 +42,13 @@ export default function JoinMatch() {
           <input
             type="text"
             value={shareCode}
-            onChange={(e) => setShareCode(e.target.value)}
-            className="w-full border-slate-300 rounded-xl px-4 py-4 bg-slate-50 border focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-center text-lg font-medium tracking-wide placeholder:text-slate-300"
-            placeholder="e.g. CB7K4P or paste the shared message"
+            onChange={(e) => setShareCode(e.target.value.toUpperCase())}
+            className="w-full border-slate-300 rounded-xl px-4 py-4 bg-slate-50 border focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-center text-2xl font-bold tracking-widest uppercase placeholder:text-slate-300"
+            placeholder="e.g. CB7K4P"
             required
+            maxLength={6}
           />
         </div>
-
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600">
-            {error}
-          </div>
-        )}
 
         <button
           type="submit"

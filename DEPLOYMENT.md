@@ -5,7 +5,6 @@ Set these in your hosting provider (for example Vercel) before deploying:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY` (server-side only; required for match creation and owner-only write operations)
 
 This project also contains `.env.local` for the supplied Supabase project so it can run immediately in a local build. For a public deployment, set the same values in the hosting dashboard.
 

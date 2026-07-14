@@ -2,33 +2,37 @@
 
 import { useState } from "react";
 import { type Match, type Player, type Round, type Score } from "@/lib/supabase";
+import { getOwnerId } from "@/lib/owner";
 import { calculateScore } from "@/lib/utils";
-import { X } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
   match: Match;
   round: Round;
-  shareCode: string;
   players: Player[];
   scores: Score[];
   onClose: () => void;
 }
 
-export default function EditRoundModal({ match, round, shareCode, players, scores, onClose }: Props) {
+export default function EditRoundModal({ match, round, players, scores, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  
+  // Create an array of objects to store form state
+  // Because actual_tricks is not stored, we will allow them to edit Call and Score directly
+  // or allow entering Actual Tricks if they want to recalculate
+  
   const [playerInputs, setPlayerInputs] = useState(
-    players.map((p) => {
-      const s = scores.find((score) => score.player_id === p.id);
+    players.map(p => {
+      const s = scores.find(s => s.player_id === p.id);
       return {
         playerId: p.id,
         scoreId: s?.id,
         call: s ? s.call.toString() : "",
         score: s ? s.score.toString() : "",
         useRecalc: false,
-        actual: "",
+        actual: ""
       };
     })
   );
@@ -36,21 +40,23 @@ export default function EditRoundModal({ match, round, shareCode, players, score
   const updateInput = (index: number, field: string, value: string) => {
     const newInputs = [...playerInputs];
     newInputs[index] = { ...newInputs[index], [field]: value };
-
-    if ((field === "call" || field === "actual") && newInputs[index].useRecalc) {
+    
+    // If they change call or actual while useRecalc is true, recalculate score preview
+    if ((field === 'call' || field === 'actual') && newInputs[index].useRecalc) {
       const c = parseInt(newInputs[index].call);
       const a = parseInt(newInputs[index].actual);
       if (!isNaN(c) && !isNaN(a)) {
         newInputs[index].score = calculateScore(c, a).toString();
       }
     }
-
+    
     setPlayerInputs(newInputs);
   };
 
   const handleSave = async () => {
     setError("");
-
+    
+    // Validate
     for (let i = 0; i < playerInputs.length; i++) {
       const { call, score } = playerInputs[i];
       if (call === "" || score === "") {
@@ -61,22 +67,9 @@ export default function EditRoundModal({ match, round, shareCode, players, score
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/matches/${encodeURIComponent(shareCode)}/write`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "updateRound",
-          payload: {
-            matchId: match.id,
-            roundId: round.id,
-            playerInputs,
-          },
-        }),
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Failed to update round");
-
+      const payloadScores = playerInputs.map(input => ({ id: input.scoreId, player_id: input.playerId, call: parseInt(input.call), score: parseInt(input.score) }));
+      const response=await fetch('/api/matches/write',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'updateRound',matchId:match.id,roundId:round.id,ownerId:getOwnerId(),scores:payloadScores})});
+      const result=await response.json(); if(!response.ok) throw new Error(result.error || 'Failed to update round');
       onClose();
     } catch (err: any) {
       console.error(err);
@@ -120,21 +113,20 @@ export default function EditRoundModal({ match, round, shareCode, players, score
                     {p.player_name}
                   </div>
                   <div>
-                    <input
-                      type="number"
-                      min="0"
-                      max="13"
+                    <input 
+                      type="number" 
+                      min="0" max="13"
                       value={input.call}
-                      onChange={(e) => updateInput(i, "call", e.target.value)}
+                      onChange={(e) => updateInput(i, 'call', e.target.value)}
                       className="w-full h-10 text-center font-bold bg-white border border-slate-200 rounded-lg outline-none focus:border-indigo-500 text-lg shadow-sm"
                       placeholder="-"
                     />
                   </div>
                   <div>
-                    <input
-                      type="number"
+                    <input 
+                      type="number" 
                       value={input.score}
-                      onChange={(e) => updateInput(i, "score", e.target.value)}
+                      onChange={(e) => updateInput(i, 'score', e.target.value)}
                       className={cn("w-full h-10 text-center font-bold bg-white border border-slate-200 rounded-lg outline-none focus:border-indigo-500 text-lg shadow-sm", parseInt(input.score) < 0 ? "text-red-500" : "text-indigo-600")}
                       placeholder="-"
                     />
@@ -143,7 +135,7 @@ export default function EditRoundModal({ match, round, shareCode, players, score
               );
             })}
           </div>
-
+          
           <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100 text-xs text-indigo-800 flex items-start gap-2 mt-4">
             <div className="text-indigo-500 mt-0.5">ℹ️</div>
             <p>
@@ -153,13 +145,13 @@ export default function EditRoundModal({ match, round, shareCode, players, score
         </div>
 
         <div className="p-4 border-t border-slate-100 bg-slate-50 grid grid-cols-2 gap-3 pb-safe">
-          <button
+          <button 
             onClick={onClose}
             className="py-3 px-4 font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
           >
             Cancel
           </button>
-          <button
+          <button 
             onClick={handleSave}
             disabled={loading}
             className="py-3 px-4 font-bold text-white bg-indigo-700 hover:bg-indigo-800 rounded-xl shadow-md transition-all active:scale-[0.98] disabled:opacity-70"

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, use, useCallback } from "react";
+import { useEffect, useState, use } from "react";
+import { getOwnerId } from "@/lib/owner";
 import { supabase, type Match, type Player, type Round, type Score } from "@/lib/supabase";
 import { calculatePlayerTotal } from "@/lib/utils";
 import Link from "next/link";
@@ -9,7 +10,6 @@ import { cn } from "@/lib/utils";
 import AddRoundModal from "./AddRoundModal";
 import EditRoundModal from "./EditRoundModal";
 import MatchSettingsModal from "./MatchSettingsModal";
-import { buildShareText } from "@/lib/ownership";
 
 export default function MatchPage({ params }: { params: Promise<{ shareCode: string }> }) {
   const { shareCode: rawShareCode } = use(params);
@@ -20,23 +20,37 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
   const [scores, setScores] = useState<Score[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [copiedCode, setCopiedCode] = useState(false);
-  const [isHost, setIsHost] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
 
   // Modal states
   const [isAddRoundOpen, setIsAddRoundOpen] = useState(false);
   const [editingRound, setEditingRound] = useState<Round | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/matches/${encodeURIComponent(shareCode)}/status`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      const statusData = await response.json().catch(() => ({}));
-      setIsHost(Boolean(statusData?.isHost));
+  useEffect(() => {
+    fetchData();
 
+    // Setup realtime subscriptions
+    const channel = supabase.channel(`match_${shareCode}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'Matches' }, payload => {
+        if (payload.new && (payload.new as Match).share_code === shareCode) {
+          setMatch(payload.new as Match);
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'Players' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'Rounds' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'Scores' }, () => fetchData())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [shareCode]);
+
+  async function fetchData() {
+    try {
+      // 1. Fetch match
       const { data: matchData, error: matchError } = await supabase
         .from('Matches')
         .select('*')
@@ -45,6 +59,7 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
 
       if (matchError || !matchData) throw new Error("Match not found");
       setMatch(matchData);
+      setIsOwner(Boolean(matchData.creator) && matchData.creator === getOwnerId());
 
       // 2. Fetch players
       const { data: playersData, error: playersError } = await supabase
@@ -80,52 +95,13 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
     } finally {
       setLoading(false);
     }
-  }, [shareCode]);
-
-  useEffect(() => {
-    const loadData = async () => {
-      await fetchData();
-    };
-
-    void loadData();
-
-    const channel = supabase.channel(`match_${shareCode}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'Matches' }, payload => {
-        if (payload.new && (payload.new as Match).share_code === shareCode) {
-          setMatch(payload.new as Match);
-        }
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'Players' }, () => {
-        void fetchData();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'Rounds' }, () => {
-        void fetchData();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'Scores' }, () => {
-        void fetchData();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchData, shareCode]);
+  }
 
   const copyCode = async () => {
     try {
       await navigator.clipboard.writeText(match?.share_code || shareCode);
-      setCopiedCode(true);
-      setTimeout(() => setCopiedCode(false), 2000);
-    } catch {
-      window.prompt("Copy this share code:", match?.share_code || shareCode);
-    }
-  };
-
-  const copyMatchCode = async () => {
-    try {
-      await navigator.clipboard.writeText(match?.share_code || shareCode);
-      setCopiedCode(true);
-      setTimeout(() => setCopiedCode(false), 2000);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch {
       window.prompt("Copy this share code:", match?.share_code || shareCode);
     }
@@ -134,13 +110,11 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
   const deleteRound = async (roundId: number) => {
     if (!confirm("Are you sure you want to delete this round?")) return;
     try {
-      const response = await fetch(`/api/matches/${encodeURIComponent(shareCode)}/write`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "deleteRound", payload: { roundId } }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Failed to delete round");
+      const response = await fetch('/api/matches/write', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ action:'deleteRound', matchId:match.id, roundId, ownerId:getOwnerId() }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to delete round');
+      await fetchData();
+      // UI updates automatically via realtime
     } catch (err: any) {
       alert("Failed to delete round: " + err.message);
     }
@@ -174,10 +148,10 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
   });
 
   return (
-    <div className="max-w-6xl mx-auto w-full p-4 md:p-8">
+    <div className="max-w-6xl mx-auto p-4 md:p-8">
       {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
-        <div className="flex items-start gap-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-3">
           <Link href="/history" className="p-2 hover:bg-slate-200 rounded-full transition-colors hidden md:block">
             <ArrowLeft className="w-5 h-5 text-slate-600" />
           </Link>
@@ -199,17 +173,10 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
               <span>•</span>
               <span>Round {rounds.length}</span>
             </div>
-            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm">
-              <span className="text-slate-500">Match Code:</span>
-              <span className="font-mono font-semibold tracking-wider text-slate-900">{match.share_code}</span>
-              <button onClick={copyMatchCode} className="rounded-full p-1 text-slate-500 hover:bg-slate-100 hover:text-indigo-700" title="Copy match code">
-                {copiedCode ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-              </button>
-            </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           <div className="hidden md:flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
             <div className="px-4 py-2 text-sm text-slate-500 bg-slate-50 border-r border-slate-200">
               Code
@@ -217,21 +184,22 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
             <div className="px-4 py-2 font-mono font-bold text-slate-900 tracking-wider">
               {match.share_code}
             </div>
-            <button
+            <button 
               onClick={copyCode}
               className="p-2 hover:bg-slate-100 transition-colors border-l border-slate-200 text-slate-500"
               title="Copy code"
             >
-              {copiedCode ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
             </button>
           </div>
 
           <button
             onClick={async () => {
+              // Always construct the canonical public match URL from the current origin.
               const matchUrl = `${window.location.origin}/match/${encodeURIComponent(match.share_code)}`;
               const shareData = {
                 title: match.match_name,
-                text: buildShareText(match.match_name, match.share_code, matchUrl),
+                text: `View the live Call Break scoreboard for ${match.match_name}. Code: ${match.share_code}`,
                 url: matchUrl,
               };
 
@@ -240,15 +208,16 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
                   await navigator.share(shareData);
                   return;
                 }
-                await navigator.clipboard.writeText(buildShareText(match.match_name, match.share_code, matchUrl));
-                alert("Match details copied to clipboard!");
+                await navigator.clipboard.writeText(matchUrl);
+                alert("Match link copied to clipboard!");
               } catch (err: any) {
+                // AbortError means the user simply closed the native share sheet.
                 if (err?.name === "AbortError") return;
                 try {
-                  await navigator.clipboard.writeText(buildShareText(match.match_name, match.share_code, matchUrl));
-                  alert("Match details copied to clipboard!");
+                  await navigator.clipboard.writeText(matchUrl);
+                  alert("Match link copied to clipboard!");
                 } catch {
-                  window.prompt("Copy this match details:", buildShareText(match.match_name, match.share_code, matchUrl));
+                  window.prompt("Copy this match link:", matchUrl);
                 }
               }
             }}
@@ -256,15 +225,13 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
           >
             Share
           </button>
-
-          {isHost && (
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              className="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
-          )}
+          
+          {isOwner && <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+          >
+            <MoreVertical className="w-5 h-5" />
+          </button>}
         </div>
       </div>
 
@@ -276,8 +243,8 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
             <span className="text-red-400 text-xl">♥</span>
             <span className="font-semibold tracking-wide ml-1">Score Sheet</span>
           </div>
-          {match.status === 'active' && isHost && (
-            <button
+          {isOwner && match.status === 'active' && (
+            <button 
               onClick={() => setIsAddRoundOpen(true)}
               className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm"
             >
@@ -310,8 +277,8 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
                     <div className="flex flex-col items-center justify-center text-slate-400 space-y-3">
                       <div className="text-4xl">📝</div>
                       <p>No rounds yet. Add the first round to start scoring.</p>
-                      {match.status === 'active' && isHost && (
-                        <button
+                      {isOwner && match.status === 'active' && (
+                        <button 
                           onClick={() => setIsAddRoundOpen(true)}
                           className="mt-2 text-indigo-600 font-semibold hover:underline"
                         >
@@ -337,7 +304,7 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
                       );
                     })}
                     <td className="py-4 px-3 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {match.status === 'active' && isHost && (
+                      {isOwner && match.status === 'active' && (
                         <div className="flex justify-center gap-2">
                           <button onClick={() => setEditingRound(round)} className="p-1.5 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors">
                             <Edit2 className="w-4 h-4" />
@@ -369,32 +336,29 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
         </div>
       </div>
 
-      {isAddRoundOpen && isHost && (
-        <AddRoundModal
-          match={match}
-          shareCode={shareCode}
-          players={players}
+      {isOwner && isAddRoundOpen && (
+        <AddRoundModal 
+          match={match} 
+          players={players} 
           nextRoundNumber={rounds.length + 1}
-          onClose={() => setIsAddRoundOpen(false)}
+          onClose={() => setIsAddRoundOpen(false)} 
+        />
+      )}
+      
+      {isOwner && editingRound && (
+        <EditRoundModal 
+          match={match} 
+          round={editingRound} 
+          players={players} 
+          scores={scores.filter(s => s.round_id === editingRound.id)}
+          onClose={() => setEditingRound(null)} 
         />
       )}
 
-      {editingRound && isHost && (
-        <EditRoundModal
-          match={match}
-          round={editingRound}
-          shareCode={shareCode}
-          players={players}
-          scores={scores.filter((score) => score.round_id === editingRound.id)}
-          onClose={() => setEditingRound(null)}
-        />
-      )}
-
-      {isSettingsOpen && isHost && (
-        <MatchSettingsModal
-          match={match}
-          shareCode={shareCode}
-          onClose={() => setIsSettingsOpen(false)}
+      {isOwner && isSettingsOpen && (
+        <MatchSettingsModal 
+          match={match} 
+          onClose={() => setIsSettingsOpen(false)} 
         />
       )}
     </div>
