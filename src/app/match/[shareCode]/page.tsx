@@ -109,6 +109,10 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
 
   const deleteRound = async (roundId: number) => {
     if (!confirm("Are you sure you want to delete this round?")) return;
+    if (!match) {
+      alert("Match data is not available yet.");
+      return;
+    }
     try {
       const response = await fetch('/api/matches/write', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ action:'deleteRound', matchId:match.id, roundId, ownerId:getOwnerId() }) });
       const result = await response.json();
