@@ -1,16 +1,17 @@
 'use client';
 
 import { useState } from "react";
-import { supabase, type Match } from "@/lib/supabase";
+import { type Match } from "@/lib/supabase";
 import { X, Trash2, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Props {
   match: Match;
+  shareCode: string;
   onClose: () => void;
 }
 
-export default function MatchSettingsModal({ match, onClose }: Props) {
+export default function MatchSettingsModal({ match, shareCode, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [newName, setNewName] = useState(match.match_name);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -23,14 +24,17 @@ export default function MatchSettingsModal({ match, onClose }: Props) {
     }
     setLoading(true);
     try {
-      await supabase
-        .from('Matches')
-        .update({ match_name: newName.trim() })
-        .eq('id', match.id);
+      const response = await fetch(`/api/matches/${encodeURIComponent(shareCode)}/write`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "updateMatch", payload: { matchName: newName.trim() } }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Failed to update name");
       setIsEditingName(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to update name");
+      alert(err instanceof Error ? err.message : "Failed to update name");
     } finally {
       setLoading(false);
     }
@@ -40,14 +44,17 @@ export default function MatchSettingsModal({ match, onClose }: Props) {
     const newStatus = match.status === 'active' ? 'completed' : 'active';
     setLoading(true);
     try {
-      await supabase
-        .from('Matches')
-        .update({ status: newStatus })
-        .eq('id', match.id);
+      const response = await fetch(`/api/matches/${encodeURIComponent(shareCode)}/write`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "updateMatch", payload: { status: newStatus } }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Failed to update status");
       onClose();
     } catch (err) {
       console.error(err);
-      alert("Failed to update status");
+      alert(err instanceof Error ? err.message : "Failed to update status");
       setLoading(false);
     }
   };
@@ -57,11 +64,17 @@ export default function MatchSettingsModal({ match, onClose }: Props) {
     
     setLoading(true);
     try {
-      await supabase.from('Matches').delete().eq('id', match.id);
+      const response = await fetch(`/api/matches/${encodeURIComponent(shareCode)}/write`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "deleteMatch" }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Failed to delete match");
       router.push('/history');
     } catch (err) {
       console.error(err);
-      alert("Failed to delete match");
+      alert(err instanceof Error ? err.message : "Failed to delete match");
       setLoading(false);
     }
   };

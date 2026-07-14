@@ -1,0 +1,3 @@
+{
+  "/api/matches/[shareCode]/status/route": "app/api/matches/[shareCode]/status/route.js"
+}

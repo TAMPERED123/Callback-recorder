@@ -1,0 +1,5 @@
+module.exports=[54799,(a,b,c)=>{b.exports=a.x("crypto",()=>require("crypto"))},19107,a=>{"use strict";let b=(0,a.i(64831).default)("arrow-left",[["path",{d:"m12 19-7-7 7-7",key:"1l729n"}],["path",{d:"M19 12H5",key:"x3x0zl"}]]);a.s(["ArrowLeft",0,b],19107)},11560,a=>{"use strict";a.i(54799);let b=/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4,20}$/;function c(a){return a.trim().toUpperCase()}function d(a){return b.test(c(a))}a.s(["buildShareText",0,function(a,b,c){return`View the live Call Break scoreboard for ${a}.
+Code: ${b}
+${c}`},"extractShareCode",0,function(a){let b=a.trim();if(!b)return null;let e=b.match(/\bcode\s*:\s*([A-Z0-9]{1,20})\b/i);if(e?.[1]){let a=c(e[1]);return d(a)?a:null}let f=b.match(/\/match\/([A-Z0-9]{1,20})(?:\/|$)/i);if(f?.[1]){let a=c(f[1]);return d(a)?a:null}let g=c(b);return d(g)?g:null}])}];
+
+//# sourceMappingURL=%5Broot-of-the-server%5D__0o20c6x._.js.map

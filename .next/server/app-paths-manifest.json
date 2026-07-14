@@ -1,0 +1,13 @@
+{
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/health/route": "app/api/health/route.js",
+  "/api/matches/[shareCode]/status/route": "app/api/matches/[shareCode]/status/route.js",
+  "/api/matches/[shareCode]/write/route": "app/api/matches/[shareCode]/write/route.js",
+  "/api/matches/route": "app/api/matches/route.js",
+  "/history/page": "app/history/page.js",
+  "/join/page": "app/join/page.js",
+  "/match/[shareCode]/page": "app/match/[shareCode]/page.js",
+  "/new-match/page": "app/new-match/page.js",
+  "/page": "app/page.js"
+}

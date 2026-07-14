@@ -1,0 +1,13 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/health/route": "/api/health",
+  "/api/matches/[shareCode]/status/route": "/api/matches/[shareCode]/status",
+  "/api/matches/[shareCode]/write/route": "/api/matches/[shareCode]/write",
+  "/api/matches/route": "/api/matches",
+  "/history/page": "/history",
+  "/join/page": "/join",
+  "/match/[shareCode]/page": "/match/[shareCode]",
+  "/new-match/page": "/new-match",
+  "/page": "/"
+}

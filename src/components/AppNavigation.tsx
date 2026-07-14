@@ -1,7 +1,7 @@
 'use client';
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PlusCircle, History, LogIn, Home, Spade } from "lucide-react";
+import { PlusCircle, History, LogIn, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -16,7 +16,6 @@ export function AppNavigation() {
 
   return (
     <>
-      {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-indigo-950 text-white min-h-screen fixed left-0 top-0 bottom-0 z-10 shadow-xl">
         <div className="p-6 flex flex-col items-center border-b border-indigo-900">
           <div className="flex gap-1 mb-2 text-indigo-400">
@@ -39,23 +38,22 @@ export function AppNavigation() {
         </nav>
       </aside>
 
-      {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 pb-safe">
-        <div className="flex justify-around items-center h-16 px-2">
-          <Link href="/" className={cn("flex flex-col items-center justify-center w-full h-full text-xs gap-1", pathname === "/" ? "text-indigo-700" : "text-slate-500")}>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="grid h-16 grid-cols-4 items-center px-2">
+          <Link href="/" className={cn("flex flex-col items-center justify-center min-w-0 gap-1 text-[11px] font-medium", pathname === "/" ? "text-indigo-700" : "text-slate-500")}>
             <Home className="w-5 h-5" />
             <span>Home</span>
           </Link>
-          <Link href="/history" className={cn("flex flex-col items-center justify-center w-full h-full text-xs gap-1", pathname === "/history" ? "text-indigo-700" : "text-slate-500")}>
+          <Link href="/history" className={cn("flex flex-col items-center justify-center min-w-0 gap-1 text-[11px] font-medium", pathname === "/history" ? "text-indigo-700" : "text-slate-500")}>
             <History className="w-5 h-5" />
             <span>History</span>
           </Link>
-          <div className="relative -top-5">
-            <Link href="/new-match" className="flex items-center justify-center w-14 h-14 bg-indigo-700 text-white rounded-full shadow-lg hover:bg-indigo-600 transition-colors">
+          <div className="relative flex items-center justify-center">
+            <Link href="/new-match" className="absolute -top-5 left-1/2 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full bg-indigo-700 text-white shadow-lg transition-colors hover:bg-indigo-600">
               <PlusCircle className="w-6 h-6" />
             </Link>
           </div>
-          <Link href="/join" className={cn("flex flex-col items-center justify-center w-full h-full text-xs gap-1", pathname === "/join" ? "text-indigo-700" : "text-slate-500")}>
+          <Link href="/join" className={cn("flex flex-col items-center justify-center min-w-0 gap-1 text-[11px] font-medium", pathname === "/join" ? "text-indigo-700" : "text-slate-500")}>
             <LogIn className="w-5 h-5" />
             <span>Join</span>
           </Link>

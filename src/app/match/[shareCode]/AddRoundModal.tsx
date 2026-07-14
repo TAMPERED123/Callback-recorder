@@ -1,32 +1,32 @@
 'use client';
 
 import { useState } from "react";
-import { supabase, type Match, type Player } from "@/lib/supabase";
+import { type Match, type Player } from "@/lib/supabase";
 import { calculateScore } from "@/lib/utils";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
   match: Match;
+  shareCode: string;
   players: Player[];
   nextRoundNumber: number;
   onClose: () => void;
 }
 
-export default function AddRoundModal({ match, players, nextRoundNumber, onClose }: Props) {
+export default function AddRoundModal({ match, shareCode, players, nextRoundNumber, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  
-  // Create an array of objects to store form state
+
   const [playerInputs, setPlayerInputs] = useState(
-    players.map(p => ({
+    players.map((p) => ({
       playerId: p.id,
       call: "",
-      actual: ""
+      actual: "",
     }))
   );
 
-  const updateInput = (index: number, field: 'call' | 'actual', value: string) => {
+  const updateInput = (index: number, field: "call" | "actual", value: string) => {
     const newInputs = [...playerInputs];
     newInputs[index][field] = value;
     setPlayerInputs(newInputs);
@@ -34,8 +34,7 @@ export default function AddRoundModal({ match, players, nextRoundNumber, onClose
 
   const handleSave = async () => {
     setError("");
-    
-    // Validate
+
     for (let i = 0; i < playerInputs.length; i++) {
       const { call, actual } = playerInputs[i];
       if (call === "" || actual === "") {
@@ -52,36 +51,21 @@ export default function AddRoundModal({ match, players, nextRoundNumber, onClose
 
     setLoading(true);
     try {
-      // 1. Insert Round
-      const { data: roundData, error: roundError } = await supabase
-        .from('Rounds')
-        .insert({
-          match_id: match.id,
-          round_number: nextRoundNumber
-        })
-        .select()
-        .single();
-
-      if (roundError) throw roundError;
-
-      // 2. Insert Scores
-      const scoresToInsert = playerInputs.map(input => {
-        const callNum = parseInt(input.call);
-        const actualNum = parseInt(input.actual);
-        const scoreVal = calculateScore(callNum, actualNum);
-        return {
-          player_id: input.playerId,
-          round_id: roundData.id,
-          call: callNum,
-          score: scoreVal
-        };
+      const response = await fetch(`/api/matches/${encodeURIComponent(shareCode)}/write`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "addRound",
+          payload: {
+            matchId: match.id,
+            nextRoundNumber,
+            playerInputs,
+          },
+        }),
       });
 
-      const { error: scoresError } = await supabase
-        .from('Scores')
-        .insert(scoresToInsert);
-
-      if (scoresError) throw scoresError;
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Failed to save round");
 
       onClose();
     } catch (err: any) {
@@ -129,21 +113,23 @@ export default function AddRoundModal({ match, players, nextRoundNumber, onClose
                     {p.player_name}
                   </div>
                   <div>
-                    <input 
-                      type="number" 
-                      min="0" max="13"
+                    <input
+                      type="number"
+                      min="0"
+                      max="13"
                       value={input.call}
-                      onChange={(e) => updateInput(i, 'call', e.target.value)}
+                      onChange={(e) => updateInput(i, "call", e.target.value)}
                       className="w-full h-10 text-center font-bold bg-white border border-slate-200 rounded-lg outline-none focus:border-indigo-500 text-lg shadow-sm"
                       placeholder="-"
                     />
                   </div>
                   <div>
-                    <input 
-                      type="number" 
-                      min="0" max="13"
+                    <input
+                      type="number"
+                      min="0"
+                      max="13"
                       value={input.actual}
-                      onChange={(e) => updateInput(i, 'actual', e.target.value)}
+                      onChange={(e) => updateInput(i, "actual", e.target.value)}
                       className="w-full h-10 text-center font-bold bg-white border border-slate-200 rounded-lg outline-none focus:border-indigo-500 text-lg shadow-sm"
                       placeholder="-"
                     />
@@ -158,13 +144,13 @@ export default function AddRoundModal({ match, players, nextRoundNumber, onClose
         </div>
 
         <div className="p-4 border-t border-slate-100 bg-slate-50 grid grid-cols-2 gap-3 pb-safe">
-          <button 
+          <button
             onClick={onClose}
             className="py-3 px-4 font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
           >
             Cancel
           </button>
-          <button 
+          <button
             onClick={handleSave}
             disabled={loading}
             className="py-3 px-4 font-bold text-white bg-indigo-700 hover:bg-indigo-800 rounded-xl shadow-md transition-all active:scale-[0.98] disabled:opacity-70"

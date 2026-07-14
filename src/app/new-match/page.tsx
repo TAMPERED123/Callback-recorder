@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import { generateShareCode } from "@/lib/utils";
 import { MinusCircle, PlusCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -15,7 +13,7 @@ export default function NewMatch() {
   const [error, setError] = useState("");
 
   const addPlayer = () => setPlayers([...players, ""]);
-  
+
   const removePlayer = (index: number) => {
     if (players.length <= 2) return;
     const newPlayers = [...players];
@@ -33,7 +31,7 @@ export default function NewMatch() {
     e.preventDefault();
     setError("");
 
-    const validPlayers = players.map(p => p.trim()).filter(p => p !== "");
+    const validPlayers = players.map((p) => p.trim()).filter((p) => p !== "");
     if (!matchName.trim()) {
       setError("Match name is required.");
       return;
@@ -46,47 +44,19 @@ export default function NewMatch() {
     setLoading(true);
 
     try {
-      // Generate a unique share code. Retry on the unlikely event of a collision.
-      let shareCode = "";
-      let matchData: any = null;
-      let lastError: any = null;
+      const response = await fetch("/api/matches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          matchName: matchName.trim(),
+          players: validPlayers,
+        }),
+      });
 
-      for (let attempt = 0; attempt < 8; attempt++) {
-        shareCode = generateShareCode();
-        const { data, error } = await supabase
-          .from("Matches")
-          .insert({
-            match_name: matchName.trim(),
-            status: "active",
-            share_code: shareCode
-          })
-          .select()
-          .single();
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to create match");
 
-        if (!error && data) {
-          matchData = data;
-          break;
-        }
-
-        lastError = error;
-        // PostgreSQL unique_violation: retry with a fresh code.
-        if (error?.code !== "23505") throw error;
-      }
-
-      if (!matchData) throw lastError || new Error("Could not generate a unique share code");
-
-      const playersToInsert = validPlayers.map(name => ({
-        match_id: matchData.id,
-        player_name: name
-      }));
-
-      const { error: playersError } = await supabase
-        .from("Players")
-        .insert(playersToInsert);
-
-      if (playersError) throw playersError;
-
-      router.push(`/match/${shareCode}`);
+      router.push(`/match/${encodeURIComponent(data.shareCode)}`);
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Failed to create match");
@@ -124,7 +94,7 @@ export default function NewMatch() {
 
         <div className="space-y-4">
           <label className="block text-sm font-semibold text-slate-700">Players</label>
-          
+
           <div className="space-y-3">
             {players.map((player, index) => (
               <div key={index} className="flex items-center gap-2">
