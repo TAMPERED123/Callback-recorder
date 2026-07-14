@@ -174,10 +174,10 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
   });
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-8">
+    <div className="max-w-6xl mx-auto w-full p-4 md:p-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
+        <div className="flex items-start gap-3">
           <Link href="/history" className="p-2 hover:bg-slate-200 rounded-full transition-colors hidden md:block">
             <ArrowLeft className="w-5 h-5 text-slate-600" />
           </Link>
@@ -209,7 +209,7 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="hidden md:flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
             <div className="px-4 py-2 text-sm text-slate-500 bg-slate-50 border-r border-slate-200">
               Code

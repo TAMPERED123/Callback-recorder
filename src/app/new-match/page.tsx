@@ -65,7 +65,7 @@ export default function NewMatch() {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-4 md:p-8">
+    <div className="max-w-xl mx-auto w-full p-4 md:p-8">
       <div className="flex items-center gap-4 mb-8">
         <Link href="/" className="p-2 hover:bg-slate-200 rounded-full transition-colors hidden md:block">
           <ArrowLeft className="w-5 h-5 text-slate-600" />
@@ -102,7 +102,7 @@ export default function NewMatch() {
                   type="text"
                   value={player}
                   onChange={(e) => updatePlayer(index, e.target.value)}
-                  className="flex-1 border-slate-300 rounded-xl px-4 py-3 bg-slate-50 border focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                  className="min-w-0 flex-1 border-slate-300 rounded-xl px-4 py-3 bg-slate-50 border focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
                   placeholder={`Player ${index + 1}`}
                   required
                 />

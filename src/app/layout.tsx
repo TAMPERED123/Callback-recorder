@@ -17,9 +17,9 @@ import { AppNavigation } from "@/components/AppNavigation";
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className={cn(inter.variable, "font-sans antialiased bg-slate-50 text-slate-900 min-h-screen")}>
+      <body className={cn(inter.variable, "font-sans antialiased bg-slate-50 text-slate-900 min-h-screen overflow-x-hidden")}>
         <AppNavigation />
-        <main className="md:ml-64 pb-20 md:pb-0 min-h-screen">
+        <main className="md:ml-64 min-h-screen w-full pb-24 md:pb-0">
           {children}
         </main>
       </body>

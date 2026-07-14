@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { getAdminSupabase } from '@/lib/server/supabase';
+import { getReadOnlySupabase } from '@/lib/server/supabase';
 import { hashOwnerToken, getOwnerCookieName, normalizeShareCode } from '@/lib/ownership';
 
 export async function GET(request: Request, { params }: { params: Promise<{ shareCode: string }> }) {
@@ -10,12 +10,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ shar
     const cookieStore = await cookies();
     const ownerToken = cookieStore.get(getOwnerCookieName(normalizedShareCode))?.value ?? null;
 
-    const adminSupabase = getAdminSupabase();
-    const { data: match, error } = await adminSupabase
+    const readSupabase = getReadOnlySupabase();
+    if (!readSupabase) {
+      return NextResponse.json({ isHost: false, match: null, error: 'Supabase read configuration is missing.' });
+    }
+
+    const { data: match, error } = await readSupabase
       .from('Matches')
       .select('*')
       .eq('share_code', normalizedShareCode)
-      .single();
+      .maybeSingle();
 
     if (error || !match) {
       return NextResponse.json({ error: 'Match not found' }, { status: 404 });

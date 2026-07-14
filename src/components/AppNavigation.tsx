@@ -38,24 +38,24 @@ export function AppNavigation() {
         </nav>
       </aside>
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="grid h-16 grid-cols-4 items-center px-2">
-          <Link href="/" className={cn("flex flex-col items-center justify-center min-w-0 gap-1 text-[11px] font-medium", pathname === "/" ? "text-indigo-700" : "text-slate-500")}>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+        <div className="mx-auto flex h-16 max-w-screen-sm items-center justify-between px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1">
+          <Link href="/" className={cn("flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium", pathname === "/" ? "text-indigo-700" : "text-slate-500")}>
             <Home className="w-5 h-5" />
-            <span>Home</span>
+            <span className="truncate">Home</span>
           </Link>
-          <Link href="/history" className={cn("flex flex-col items-center justify-center min-w-0 gap-1 text-[11px] font-medium", pathname === "/history" ? "text-indigo-700" : "text-slate-500")}>
+          <Link href="/history" className={cn("flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium", pathname === "/history" ? "text-indigo-700" : "text-slate-500")}>
             <History className="w-5 h-5" />
-            <span>History</span>
+            <span className="truncate">History</span>
           </Link>
-          <div className="relative flex items-center justify-center">
-            <Link href="/new-match" className="absolute -top-5 left-1/2 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full bg-indigo-700 text-white shadow-lg transition-colors hover:bg-indigo-600">
+          <div className="relative flex w-16 shrink-0 items-center justify-center">
+            <Link href="/new-match" className="absolute -top-3 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-700 text-white shadow-lg transition-colors hover:bg-indigo-600">
               <PlusCircle className="w-6 h-6" />
             </Link>
           </div>
-          <Link href="/join" className={cn("flex flex-col items-center justify-center min-w-0 gap-1 text-[11px] font-medium", pathname === "/join" ? "text-indigo-700" : "text-slate-500")}>
+          <Link href="/join" className={cn("flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium", pathname === "/join" ? "text-indigo-700" : "text-slate-500")}>
             <LogIn className="w-5 h-5" />
-            <span>Join</span>
+            <span className="truncate">Join</span>
           </Link>
         </div>
       </nav>

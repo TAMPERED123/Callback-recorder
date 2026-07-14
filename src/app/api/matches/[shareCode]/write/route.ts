@@ -123,7 +123,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ sha
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     console.error(error);
-    const status = error.message === 'Match not found' ? 404 : error.message === 'Forbidden' ? 403 : 401;
-    return NextResponse.json({ error: error.message || 'Unauthorized' }, { status });
+    const message = error?.message || 'Unauthorized';
+    const status = message === 'Match not found' ? 404 : message === 'Forbidden' ? 403 : message.includes('Missing Supabase service role configuration') ? 503 : 401;
+    return NextResponse.json({ error: message }, { status });
   }
 }

@@ -77,6 +77,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ shareCode, matchId: match.id });
   } catch (error: any) {
     console.error(error);
-    return NextResponse.json({ error: error.message || 'Failed to create match' }, { status: 500 });
+    const message = error?.message || 'Failed to create match';
+    const status = message.includes('Missing Supabase service role configuration') ? 503 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }
