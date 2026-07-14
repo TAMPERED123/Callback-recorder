@@ -40,24 +40,24 @@ export function AppNavigation() {
       </aside>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 w-full bg-white border-t border-slate-200 z-50 pb-safe">
-        <div className="grid grid-cols-4 items-center h-16 px-1 w-full max-w-full">
-          <Link href="/" className={cn("flex flex-col items-center justify-center w-full h-full text-xs gap-1", pathname === "/" ? "text-indigo-700" : "text-slate-500")}>
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto flex h-16 max-w-screen-sm items-center px-1">
+          <Link href="/" className={cn("flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 text-[10px] leading-none", pathname === "/" ? "text-indigo-700" : "text-slate-500")}>
             <Home className="w-5 h-5" />
-            <span>Home</span>
+            <span className="truncate">Home</span>
           </Link>
-          <Link href="/history" className={cn("flex flex-col items-center justify-center w-full h-full text-xs gap-1", pathname === "/history" ? "text-indigo-700" : "text-slate-500")}>
+          <Link href="/history" className={cn("flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 text-[10px] leading-none", pathname === "/history" ? "text-indigo-700" : "text-slate-500")}>
             <History className="w-5 h-5" />
-            <span>History</span>
+            <span className="truncate">History</span>
           </Link>
-          <div className="relative -top-5 flex justify-center">
-            <Link href="/new-match" className="flex items-center justify-center w-14 h-14 bg-indigo-700 text-white rounded-full shadow-lg hover:bg-indigo-600 transition-colors">
+          <div className="flex w-16 shrink-0 justify-center">
+            <Link href="/new-match" className="relative -top-2 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-700 text-white shadow-lg transition-colors hover:bg-indigo-600">
               <PlusCircle className="w-6 h-6" />
             </Link>
           </div>
-          <Link href="/join" className={cn("flex flex-col items-center justify-center w-full h-full text-xs gap-1", pathname === "/join" ? "text-indigo-700" : "text-slate-500")}>
+          <Link href="/join" className={cn("flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 text-[10px] leading-none", pathname === "/join" ? "text-indigo-700" : "text-slate-500")}>
             <LogIn className="w-5 h-5" />
-            <span>Join</span>
+            <span className="truncate">Join</span>
           </Link>
         </div>
       </nav>

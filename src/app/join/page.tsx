@@ -4,19 +4,26 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogIn, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { extractShareCode } from "@/lib/ownership";
 
 export default function JoinMatch() {
   const router = useRouter();
   const [shareCode, setShareCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!shareCode.trim()) return;
-    
+    const normalizedShareCode = extractShareCode(shareCode);
+
+    if (!normalizedShareCode) {
+      setError("Please enter a valid share code.");
+      return;
+    }
+
+    setError("");
     setLoading(true);
-    // Let the match page handle whether the code exists or not
-    router.push(`/match/${shareCode.trim().toUpperCase()}`);
+    router.push(`/match/${encodeURIComponent(normalizedShareCode)}`);
   };
 
   return (
@@ -42,12 +49,18 @@ export default function JoinMatch() {
           <input
             type="text"
             value={shareCode}
-            onChange={(e) => setShareCode(e.target.value.toUpperCase())}
-            className="w-full border-slate-300 rounded-xl px-4 py-4 bg-slate-50 border focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-center text-2xl font-bold tracking-widest uppercase placeholder:text-slate-300"
-            placeholder="e.g. CB7K4P"
+            onChange={(e) => {
+              setShareCode(e.target.value);
+              if (error) setError("");
+            }}
+            className="w-full border-slate-300 rounded-xl px-4 py-4 bg-slate-50 border focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-center text-lg font-semibold tracking-wide placeholder:text-slate-300"
+            placeholder="e.g. CZW7BJ or a shared message"
             required
-            maxLength={6}
+            maxLength={240}
+            autoCapitalize="characters"
+            autoCorrect="off"
           />
+          {error && <p className="text-sm text-red-600">{error}</p>}
         </div>
 
         <button

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import { getOwnerId } from "@/lib/owner";
+import { buildShareText } from "@/lib/ownership";
 import { supabase, type Match, type Player, type Round, type Score } from "@/lib/supabase";
 import { calculatePlayerTotal } from "@/lib/utils";
 import Link from "next/link";
@@ -50,6 +51,14 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
 
   async function fetchData() {
     try {
+      setMatch(null);
+      setPlayers([]);
+      setRounds([]);
+      setScores([]);
+      setIsOwner(false);
+      setError("");
+      setLoading(true);
+
       // 1. Fetch match
       const { data: matchData, error: matchError } = await supabase
         .from('Matches')
@@ -180,30 +189,24 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="hidden md:flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
-            <div className="px-4 py-2 text-sm text-slate-500 bg-slate-50 border-r border-slate-200">
-              Code
-            </div>
-            <div className="px-4 py-2 font-mono font-bold text-slate-900 tracking-wider">
-              {match.share_code}
-            </div>
-            <button 
-              onClick={copyCode}
-              className="p-2 hover:bg-slate-100 transition-colors border-l border-slate-200 text-slate-500"
-              title="Copy code"
-            >
-              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-            </button>
-          </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            onClick={copyCode}
+            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+            title="Copy share code"
+          >
+            <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Code</span>
+            <span className="font-mono font-semibold text-slate-900">{match.share_code}</span>
+            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+          </button>
 
           <button
             onClick={async () => {
-              // Always construct the canonical public match URL from the current origin.
               const matchUrl = `${window.location.origin}/match/${encodeURIComponent(match.share_code)}`;
+              const shareText = buildShareText(match.match_name, match.share_code, matchUrl);
               const shareData = {
                 title: match.match_name,
-                text: `View the live Call Break scoreboard for ${match.match_name}. Code: ${match.share_code}`,
+                text: shareText,
                 url: matchUrl,
               };
 
@@ -212,16 +215,15 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
                   await navigator.share(shareData);
                   return;
                 }
-                await navigator.clipboard.writeText(matchUrl);
-                alert("Match link copied to clipboard!");
+                await navigator.clipboard.writeText(shareText);
+                alert("Match details copied to clipboard!");
               } catch (err: any) {
-                // AbortError means the user simply closed the native share sheet.
                 if (err?.name === "AbortError") return;
                 try {
-                  await navigator.clipboard.writeText(matchUrl);
-                  alert("Match link copied to clipboard!");
+                  await navigator.clipboard.writeText(shareText);
+                  alert("Match details copied to clipboard!");
                 } catch {
-                  window.prompt("Copy this match link:", matchUrl);
+                  window.prompt("Copy this match link:", shareText);
                 }
               }
             }}

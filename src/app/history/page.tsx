@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase, type Match } from "@/lib/supabase";
+import { getOwnerId } from "@/lib/owner";
 import { format } from "date-fns";
 import Link from "next/link";
 import { ChevronRight, Filter, ArrowLeft } from "lucide-react";
@@ -15,9 +16,11 @@ export default function HistoryPage() {
   useEffect(() => {
     async function fetchMatches() {
       try {
+        const ownerId = getOwnerId();
         const { data, error } = await supabase
           .from("Matches")
           .select("*")
+          .eq("creator", ownerId)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
