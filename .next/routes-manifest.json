@@ -79,6 +79,18 @@
       "namedRegex": "^/api/matches(?:/)?$"
     },
     {
+      "page": "/api/matches/create",
+      "regex": "^/api/matches/create(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/matches/create(?:/)?$"
+    },
+    {
+      "page": "/api/matches/write",
+      "regex": "^/api/matches/write(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/matches/write(?:/)?$"
+    },
+    {
       "page": "/history",
       "regex": "^/history(?:/)?$",
       "routeKeys": {},

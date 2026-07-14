@@ -13,12 +13,14 @@ export const metadata: Metadata = {
 };
 
 import { AppNavigation } from "@/components/AppNavigation";
+import UserNamePrompt from "@/components/UserNamePrompt";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className={cn(inter.variable, "font-sans antialiased bg-slate-50 text-slate-900 min-h-screen")}>
         <AppNavigation />
+        <UserNamePrompt />
         <main className="md:ml-64 pb-20 md:pb-0 min-h-screen">
           {children}
         </main>

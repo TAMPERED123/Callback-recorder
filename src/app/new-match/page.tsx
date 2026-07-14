@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { getOwnerId } from "@/lib/owner";
+import { getOwnerId, getUserName, setMatchOwnerDisplayName } from "@/lib/owner";
 import { generateShareCode } from "@/lib/utils";
 import { MinusCircle, PlusCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -53,6 +53,10 @@ export default function NewMatch() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Failed to create match");
+      const currentName = getUserName();
+      if (currentName && result.shareCode) {
+        setMatchOwnerDisplayName(result.shareCode, currentName);
+      }
       router.push(`/match/${result.shareCode}`);
     } catch (err: any) {
       console.error(err);

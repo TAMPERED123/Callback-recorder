@@ -119,10 +119,28 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../src/app/api/matches/create/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/matches/create">> = Specific
+  const handler = {} as typeof import("../../src/app/api/matches/create/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../src/app/api/matches/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/matches">> = Specific
   const handler = {} as typeof import("../../src/app/api/matches/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/matches/write/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/matches/write">> = Specific
+  const handler = {} as typeof import("../../src/app/api/matches/write/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

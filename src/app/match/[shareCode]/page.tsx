@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, use } from "react";
-import { getOwnerId } from "@/lib/owner";
+import { getMatchOwnerDisplayName, getOwnerId } from "@/lib/owner";
 import { buildShareText } from "@/lib/ownership";
 import { supabase, type Match, type Player, type Round, type Score } from "@/lib/supabase";
 import { calculatePlayerTotal } from "@/lib/utils";
@@ -23,6 +23,7 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [ownerDisplayName, setOwnerDisplayName] = useState<string | null>(null);
 
   // Modal states
   const [isAddRoundOpen, setIsAddRoundOpen] = useState(false);
@@ -69,6 +70,7 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
       if (matchError || !matchData) throw new Error("Match not found");
       setMatch(matchData);
       setIsOwner(Boolean(matchData.creator) && matchData.creator === getOwnerId());
+      setOwnerDisplayName(getMatchOwnerDisplayName(shareCode));
 
       // 2. Fetch players
       const { data: playersData, error: playersError } = await supabase
@@ -171,6 +173,9 @@ export default function MatchPage({ params }: { params: Promise<{ shareCode: str
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{match.match_name}</h1>
+              {ownerDisplayName && (
+                <span className="text-sm text-slate-500 font-medium">• Created by {ownerDisplayName}</span>
+              )}
               {match.status === 'completed' && (
                 <span className="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" /> Completed
